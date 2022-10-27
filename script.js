@@ -1,17 +1,137 @@
 "use strict";
 
 /*
-3. Assignment (Calculator):
-*/
+ */
 
-/*
-1. / opens search? and doesn't work
-2. Enter presses 5?
-3. Minus doesn't work
-*/
+class Calculator {
+  constructor() {
+    this.previousVariable = "";
+    this.displayVariable = "";
+    this.activeOperator = "";
+    this.pressedEqual = false;
+    this.num = "";
+  }
+
+  //Utility
+  displayLengthCorrect() {
+    const length = this.displayVariable.length;
+    if (length > 15) {
+      display.textContent =
+        "..." + this.displayVariable.substring(length - 15, length - 1);
+    }
+  }
+
+  //Basic math operations + - * /
+  operate() {
+    const operator = this.activeOperator;
+    const num1 = +this.previousVariable;
+    const num2 = +this.displayVariable;
+    switch (operator) {
+      case "+":
+        return (num1 * 1000 + num2 * 1000) / 1000;
+      case "-":
+        return num1 - num2;
+      case "*":
+        return num1 * num2;
+      case "/":
+        return num1 / num2;
+    }
+  }
+
+  handleNumbers(num) {
+    if (this.pressedEqual) {
+      this.displayVariable = num;
+      display.textContent = this.displayVariable;
+      this.pressedEqual = false;
+    } else {
+      this.displayVariable = this.displayVariable + num;
+      display.textContent = this.displayVariable;
+    }
+    this.displayLengthCorrect();
+  }
+
+  handleOperators(operator) {
+    if (this.previousVariable === "" && this.displayVariable === "") {
+      return;
+    }
+    if (this.activeOperator) {
+      this.displayVariable = this.operate();
+      display.textContent = this.displayVariable;
+    }
+
+    this.activeOperator = operator;
+    this.previousVariable = this.displayVariable;
+    this.displayVariable = "";
+    this.pressedEqual = false;
+  }
+
+  floatFunc() {
+    if (this.pressedEqual || this.displayVariable.includes(".")) {
+      return;
+    }
+
+    this.displayVariable = `${this.displayVariable}.`;
+    display.textContent = this.displayVariable;
+
+    this.displayLengthCorrect();
+  }
+
+  minusFunc() {
+    if (this.pressedEqual) return;
+    if (this.displayVariable.includes("-")) {
+      this.displayVariable = this.displayVariable.substring(1);
+    } else {
+      this.displayVariable = `-${this.displayVariable}`;
+    }
+    display.textContent = this.displayVariable;
+    this.displayLengthCorrect();
+  }
+
+  backspaceFunc() {
+    if (this.displayVariable.length > 1) {
+      this.displayVariable = this.displayVariable.substring(
+        0,
+        this.displayVariable.length - 1
+      );
+      display.textContent = this.displayVariable;
+      this.displayLengthCorrect();
+      return;
+    } else if (this.previousVariable !== "") {
+      this.displayVariable = "";
+      display.textContent = "0";
+      return;
+    }
+    this.displayVariable = "";
+    display.textContent = "Start";
+  }
+
+  equalFunc() {
+    if (!this.activeOperator) return;
+
+    this.displayVariable = this.operate();
+    display.textContent = this.displayVariable;
+    this.activeOperator = "";
+    this.pressedEqual = true;
+
+    this.displayLengthCorrect();
+
+    if (this.displayVariable == Infinity || this.displayVariable == -Infinity) {
+      display.textContent = "You can't divide by 0";
+    }
+  }
+
+  clearFunc() {
+    this.previousVariable = "";
+    this.displayVariable = "";
+    this.activeOperator = "";
+    this.pressedEqual = false;
+    display.textContent = "Start";
+  }
+}
+
+let calculator = new Calculator();
 
 const display = document.querySelector(".calc__display");
-
 const digits = document.querySelectorAll(".calc__digit");
 const operators = document.querySelectorAll(".calc__operators");
 
@@ -21,208 +141,69 @@ const float = document.querySelector(".calc__float--btn");
 const minus = document.querySelector(".calc__minus--btn");
 const backspace = document.querySelector(".calc__backspace--btn");
 
-const operate = function () {
-  const operator = activeOperator;
-  const num1 = +previousVariable;
-  const num2 = +displayVariable;
-  switch (operator) {
-    case "+":
-      return (num1 * 1000 + num2 * 1000) / 1000;
-    case "-":
-      return num1 - num2;
-    case "*":
-      return num1 * num2;
-    case "/":
-      return num1 / num2;
-  }
-};
-
-let previousVariable = "";
-let displayVariable = "";
-let activeOperator = "";
-let pressedEqual = false;
-
-/*---------------------------------------------------------------------------------------*/
-/* Utility */
-
-const displayLengthCorrect = function () {
-  const length = displayVariable.length;
-  if (length > 15) {
-    display.textContent =
-      "..." + displayVariable.substring(length - 15, length - 1);
-  }
-};
-/*---------------------------------------------------------------------------------------*/
-
-/* Digits listeners - 1 2 3 4 5 6 7 8 9 0*/
-
-const handleNumbers = function (num) {
-  if (pressedEqual) {
-    displayVariable = num;
-    display.textContent = displayVariable;
-    pressedEqual = false;
-  } else {
-    displayVariable = displayVariable + num;
-    display.textContent = displayVariable;
-  }
-  displayLengthCorrect();
-};
+//Event Listeners for screen
 
 [...digits].forEach((digit) =>
-  digit.addEventListener("click", (e) => handleNumbers(e.target.textContent))
-);
-
-/*---------------------------------------------------------------------------------------*/
-
-/* Operators listeners - + - * / */
-
-const handleOperators = function (operator) {
-  if (previousVariable === "" && displayVariable === "") {
-    return;
-  }
-  if (activeOperator) {
-    displayVariable = operate();
-    display.textContent = displayVariable;
-  }
-
-  activeOperator = operator;
-  previousVariable = displayVariable;
-  displayVariable = "";
-  pressedEqual = false;
-};
-
-[...operators].forEach((operator) =>
-  operator.addEventListener("click", (e) =>
-    handleOperators(e.target.textContent.trim())
+  digit.addEventListener("click", (e) =>
+    calculator.handleNumbers(e.target.textContent)
   )
 );
 
-/*---------------------------------------------------------------------------------------*/
+[...operators].forEach((operator) =>
+  operator.addEventListener("click", (e) =>
+    calculator.handleOperators(e.target.textContent.trim())
+  )
+);
 
-/* Making decimals - . */
-const floatFunc = function () {
-  if (pressedEqual || displayVariable.includes(".")) {
-    return;
-  }
-
-  displayVariable = `${displayVariable}.`;
-  display.textContent = displayVariable;
-
-  displayLengthCorrect();
-};
-
-float.addEventListener("click", floatFunc);
-
-/* Making positive/negative - +/- */
-
-const minusFunc = function () {
-  if (pressedEqual) return;
-  if (displayVariable.includes("-")) {
-    displayVariable = displayVariable.substring(1);
-  } else {
-    displayVariable = `-${displayVariable}`;
-  }
-  display.textContent = displayVariable;
-
-  displayLengthCorrect();
-};
-
-minus.addEventListener("click", minusFunc);
-
-/* Deleting the last digit  - <= >*/
-
-const backspaceFunc = function () {
-  if (displayVariable.length > 1) {
-    displayVariable = displayVariable.substring(0, displayVariable.length - 1);
-    display.textContent = displayVariable;
-    displayLengthCorrect();
-    return;
-  } else if (previousVariable !== "") {
-    displayVariable = "";
-    display.textContent = "0";
-    return;
-  }
-  displayVariable = "";
-  display.textContent = "Start";
-};
-
-backspace.addEventListener("click", backspaceFunc);
-
-/* Computing */
-const equalFunc = function () {
-  if (!activeOperator) return;
-
-  displayVariable = operate();
-  display.textContent = displayVariable;
-  activeOperator = "";
-  pressedEqual = true;
-
-  displayLengthCorrect();
-
-  if (displayVariable == Infinity || displayVariable == -Infinity) {
-    display.textContent = "You can't divide by 0";
-  }
-};
-
-equal.addEventListener("click", equalFunc);
-
-/* Delete all - AC */
-
-const clearFunc = function () {
-  previousVariable = "";
-  displayVariable = "";
-  activeOperator = "";
-  display.textContent = "Start";
-  pressedEqual = false;
-
-  displayLengthCorrect();
-};
-
-clear.addEventListener("click", clearFunc);
+float.addEventListener("click", function () {
+  calculator.floatFunc();
+});
+minus.addEventListener("click", function () {
+  calculator.minusFunc();
+});
+backspace.addEventListener("click", function () {
+  calculator.backspaceFunc();
+});
+equal.addEventListener("click", function () {
+  calculator.equalFunc();
+});
+clear.addEventListener("click", function () {
+  calculator.clearFunc();
+});
 
 //Keyboard support
 
-document.addEventListener("keypress", (event) => {
-  const { key } = event;
-  if (
-    key === "1" ||
-    key === "2" ||
-    key === "3" ||
-    key === "4" ||
-    key === "5" ||
-    key === "6" ||
-    key === "7" ||
-    key === "8" ||
-    key === "9" ||
-    key === "0"
-  ) {
-    handleNumbers(key);
+document.addEventListener("keypress", ({ key }) => {
+  if (!isNaN(+key)) {
+    calculator.handleNumbers(key);
+    return;
   }
-  if (key === "+" || key === "/" || key === "*") {
-    handleOperators(key);
-  }
-  if (key === "-") {
-    if (displayVariable === "") {
-      minusFunc();
-    } else {
-      handleOperators(key);
-    }
-  }
-  if (key === ".") {
-    floatFunc();
-  }
-  if (key === "=" || key === "Enter") {
-    equalFunc();
+
+  switch (key) {
+    case "+":
+    case "/":
+    case "*":
+      calculator.handleOperators(key);
+      break;
+    case ".":
+      calculator.floatFunc();
+      break;
+    case "=":
+    case "Enter":
+      calculator.equalFunc();
+      break;
+    case "-":
+      if (this.displayVariable === "") {
+        calculator.minusFunc();
+      } else {
+        calculator.handleOperators(key);
+      }
+      break;
   }
 });
 
-document.addEventListener("keydown", (event) => {
-  const { key } = event;
+document.addEventListener("keydown", ({ key }) => {
   if (key === "Backspace" || key === "Delete") {
-    backspaceFunc();
+    calculator.backspaceFunc();
   }
-});
-
-document.addEventListener("keypress", (event) => {
-  console.log(event);
 });
